@@ -1,0 +1,52 @@
+"""
+This example shows how you can download all GIFs from a user's profile on RedGifs.
+"""
+import os
+from redgifs import API
+
+api = API()
+api.login()
+
+# Search for the user
+USERNAME = 'lillaylaxo'
+data = api.search_creator(USERNAME)
+
+total_pages = data.pages
+current_page = data.page
+
+# This is the total gifs in the `current_page`
+total_gifs = data.gifs
+
+# Create a folder based on the username if it doesn't exist
+folder_path = os.path.join(os.getcwd(), USERNAME)
+os.makedirs(folder_path, exist_ok=True)
+
+while current_page <= total_pages:
+    for i, gifs in enumerate(total_gifs, start=1):
+        try:
+            # We do the downloading here.
+            # Save the file in the folder named after the username
+            api.download(gifs.urls.hd, os.path.join(folder_path, f'{i}.mp4'))
+
+            # Print a message to keep track of the downloads
+            print(f'Downloaded {i} out of {data.total}')
+
+        except Exception as e:
+            raise Exception(f'An error occurred while downloading:\n{e}')
+
+    # If we are in the last page, break the while loop
+    if current_page == total_pages:
+        break
+
+    # otherwise, we continue...
+
+    # Update the current page number
+    current_page += 1
+    # Clear the old gifs from the previous page
+    total_gifs.clear()
+    # Make a new API call to get the gifs from the next page
+    data = api.search_creator(USERNAME, page=current_page)
+    # Update `total_gifs` with the new gifs
+    total_gifs.extend(data.gifs)
+
+print('Completed!')
